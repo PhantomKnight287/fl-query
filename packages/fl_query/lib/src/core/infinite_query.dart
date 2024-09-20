@@ -14,8 +14,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:mutex/mutex.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-typedef InfiniteQueryFn<DataType, PageType> = FutureOr<DataType?> Function(
-    PageType page);
+typedef InfiniteQueryFn<DataType, PageType> = FutureOr<DataType?> Function(PageType page);
 typedef InfiniteQueryNextPage<DataType, PageType> = PageType? Function(
   PageType lastPage,
   DataType lastPageData,
@@ -60,8 +59,7 @@ class InfiniteQueryPage<DataType, ErrorType, PageType> with Invalidation {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is InfiniteQueryPage<DataType, ErrorType, PageType> &&
-        other.page == page;
+    return other is InfiniteQueryPage<DataType, ErrorType, PageType> && other.page == page;
   }
 
   @override
@@ -76,8 +74,7 @@ class InfiniteQueryState<DataType, ErrorType, PageType> {
   });
 
   PageType get lastPage {
-    final fetchedPages =
-        pages.whereNot((e) => e.data == null && e.error == null);
+    final fetchedPages = pages.whereNot((e) => e.data == null && e.error == null);
 
     if (fetchedPages.isEmpty && pages.length == 1) {
       return pages.last.page;
@@ -86,8 +83,7 @@ class InfiniteQueryState<DataType, ErrorType, PageType> {
     return fetchedPages.last.page;
   }
 
-  InfiniteQueryState<DataType, ErrorType, PageType> copyWith(
-      {List<InfiniteQueryPage<DataType, ErrorType, PageType>>? pages}) {
+  InfiniteQueryState<DataType, ErrorType, PageType> copyWith({List<InfiniteQueryPage<DataType, ErrorType, PageType>>? pages}) {
     return InfiniteQueryState<DataType, ErrorType, PageType>(
       pages: pages ?? this.pages,
     );
@@ -115,9 +111,7 @@ class PageEvent<T, P> {
 /// - [initialParam] provides the initial page param for fetching
 ///
 /// Use the [InfiniteQueryBuilder] create and use an [InfiniteQuery]
-class InfiniteQuery<DataType, ErrorType, PageType>
-    extends StateNotifier<InfiniteQueryState<DataType, ErrorType, PageType>>
-    with Retryer<DataType, ErrorType> {
+class InfiniteQuery<DataType, ErrorType, PageType> extends StateNotifier<InfiniteQueryState<DataType, ErrorType, PageType>> with Retryer<DataType, ErrorType> {
   final String key;
   final RetryConfig retryConfig;
   final RefreshConfig refreshConfig;
@@ -160,13 +154,11 @@ class InfiniteQuery<DataType, ErrorType, PageType>
                 .map(
                   (entry) => InfiniteQueryPage<DataType, ErrorType, PageType>(
                     page: entry.key as PageType,
-                    data: jsonConfig!.fromJson(
-                        Map.castFrom<dynamic, dynamic, String, dynamic>(
+                    data: jsonConfig!.fromJson(Map.castFrom<dynamic, dynamic, String, dynamic>(
                       entry.value,
                     )),
                     // this makes the page loaded from cache `stale`
-                    updatedAt:
-                        DateTime.now().subtract(refreshConfig.staleDuration),
+                    updatedAt: DateTime.now().subtract(refreshConfig.staleDuration),
                     staleDuration: refreshConfig.staleDuration,
                   ),
                 )
@@ -193,20 +185,15 @@ class InfiniteQuery<DataType, ErrorType, PageType>
     // Listen to network changes and cancel any ongoing operations
 
     bool wasConnected = true;
-    _connectivitySubscription = QueryClient.connectivity.onConnectivityChanged
-        .listen((isConnected) async {
+    _connectivitySubscription = QueryClient.connectivity.onConnectivityChanged.listen((isConnected) async {
       try {
-        if (isConnected &&
-            !wasConnected &&
-            refreshConfig.refreshOnNetworkStateChange) {
+        if (isConnected && !wasConnected && refreshConfig.refreshOnNetworkStateChange) {
           for (final page in state.pages) {
             if (page.isStale) {
               await refresh(page.page);
             }
           }
-        } else if (!isConnected &&
-            _mutex.isLocked &&
-            retryConfig.cancelWhenOffline) {
+        } else if (!isConnected && _mutex.isLocked && retryConfig.cancelWhenOffline) {
           await _operation?.cancel();
         }
       } finally {
@@ -224,8 +211,7 @@ class InfiniteQuery<DataType, ErrorType, PageType>
   CancelableOperation<void>? _operation;
 
   /// All the pages that has been successfully fetched
-  List<DataType> get pages =>
-      state.pages.map((e) => e.data).whereType<DataType>().toList();
+  List<DataType> get pages => state.pages.map((e) => e.data).whereType<DataType>().toList();
 
   /// All the errors of pages that has failed to fetch
   List<ErrorType> get errors => state.pages
@@ -242,20 +228,16 @@ class InfiniteQuery<DataType, ErrorType, PageType>
   ///
   /// Subscribe to it to get notified when a page data is
   /// fetched/refreshed/retried
-  Stream<PageEvent<DataType, PageType>> get dataStream =>
-      _dataController.stream;
+  Stream<PageEvent<DataType, PageType>> get dataStream => _dataController.stream;
 
   /// Stream of error events
   ///
   /// Subscribe to it to get notified when a page has failed
-  Stream<PageEvent<ErrorType, PageType>> get errorStream =>
-      _errorController.stream;
+  Stream<PageEvent<ErrorType, PageType>> get errorStream => _errorController.stream;
 
   /// The next page param that will be used to fetch the next page
   PageType? get getNextPage {
-    final lastPageData = state.pages
-        .firstWhereOrNull((e) => e.data is DataType && e.page == lastPage)
-        ?.data;
+    final lastPageData = state.pages.firstWhereOrNull((e) => e.data is DataType && e.page == lastPage)?.data;
 
     if (lastPageData == null) return null;
 
@@ -284,19 +266,21 @@ class InfiniteQuery<DataType, ErrorType, PageType>
 
   bool get hasNextPage => getNextPage != null;
 
+  bool get isLoading {
+    final firstPage = state.pages.firstOrNull;
+    return firstPage != null && firstPage._loading && firstPage.data == null && firstPage.error == null;
+  }
+
   _replaceOrAddPage(InfiniteQueryPage<DataType, ErrorType, PageType> newPage) {
     final pageIdx = state.pages.indexWhere((e) => e.page == newPage.page);
 
-    final newPages = (pageIdx == -1)
-        ? [...state.pages, newPage]
-        : ([...state.pages]..[pageIdx] = newPage);
+    final newPages = (pageIdx == -1) ? [...state.pages, newPage] : ([...state.pages]..[pageIdx] = newPage);
 
     state = state.copyWith(pages: newPages);
   }
 
   Future<void> _operate(PageType page) async {
-    if (!QueryClient.connectivity.isConnectedSync &&
-        retryConfig.cancelWhenOffline) {
+    if (!QueryClient.connectivity.isConnectedSync && retryConfig.cancelWhenOffline) {
       return;
     }
     return _mutex.protect(() async {
@@ -314,8 +298,7 @@ class InfiniteQuery<DataType, ErrorType, PageType>
         () => _queryFn(page),
         config: retryConfig,
         onSuccessful: (data) async {
-          final dataPage = storedPage.copyWith(
-              data: () => data, error: null, loading: false);
+          final dataPage = storedPage.copyWith(data: () => data, error: null, loading: false);
           _replaceOrAddPage(dataPage);
 
           if (dataPage.data is DataType) {
@@ -336,12 +319,10 @@ class InfiniteQuery<DataType, ErrorType, PageType>
           }
         },
         onFailed: (error) {
-          final errorPage =
-              storedPage.copyWith(error: () => error, loading: false);
+          final errorPage = storedPage.copyWith(error: () => error, loading: false);
           _replaceOrAddPage(errorPage);
 
-          if (errorPage.error is ErrorType)
-            _errorController.add(PageEvent.fromPage(errorPage));
+          if (errorPage.error is ErrorType) _errorController.add(PageEvent.fromPage(errorPage));
         },
       );
 
@@ -354,8 +335,7 @@ class InfiniteQuery<DataType, ErrorType, PageType>
   /// If page is already done fetching. It'll simply returns the old data
   Future<DataType?> fetch() async {
     final lastPage = state.lastPage;
-    if (_mutex.isLocked || hasPageData || hasPageError)
-      return state.pages.last.data;
+    if (_mutex.isLocked || hasPageData || hasPageError) return state.pages.last.data;
     return await _operate(lastPage).then((_) => state.pages.last.data);
   }
 
@@ -364,8 +344,7 @@ class InfiniteQuery<DataType, ErrorType, PageType>
   /// - [page] The page to refresh. If null, it'll refresh the last page
   Future<DataType?> refresh([PageType? page]) async {
     page ??= lastPage;
-    if (_mutex.isLocked)
-      return state.pages.firstWhereOrNull((e) => e.page == page)?.data;
+    if (_mutex.isLocked) return state.pages.firstWhereOrNull((e) => e.page == page)?.data;
     return await _operate(page!).then((_) {
       return state.pages.firstWhereOrNull((e) => e.page == page)?.data;
     });
@@ -479,9 +458,7 @@ class InfiniteQuery<DataType, ErrorType, PageType>
 
     return resolve(
       data,
-      error: resolvents.error != null
-          ? (e) => resolvents.error!(e.cast<dynamic>())
-          : error!,
+      error: resolvents.error != null ? (e) => resolvents.error!(e.cast<dynamic>()) : error!,
       loading: (resolvents.loading ?? loading)!,
       offline: resolvents.offline ?? offline,
     );
@@ -535,14 +512,12 @@ class InfiniteQuery<DataType, ErrorType, PageType>
   }
 
   @override
-  operator ==(Object other) =>
-      identical(this, other) || other is InfiniteQuery && key == other.key;
+  operator ==(Object other) => identical(this, other) || other is InfiniteQuery && key == other.key;
 
   @override
   int get hashCode => key.hashCode;
 
-  InfiniteQuery<NewDataType, NewErrorType, NewPageType>
-      cast<NewDataType, NewErrorType, NewPageType>() {
+  InfiniteQuery<NewDataType, NewErrorType, NewPageType> cast<NewDataType, NewErrorType, NewPageType>() {
     return this as InfiniteQuery<NewDataType, NewErrorType, NewPageType>;
   }
 }
