@@ -13,7 +13,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fl_query: ^1.1.0
+  fl_query: 
+    git: 
+      ref: main
+      url: https://github.com/PhantomKnight287/fl-query.git
+      path: packages/fl_query
   connectivity_plus: ^4.0.1
 
 dev_dependencies:
