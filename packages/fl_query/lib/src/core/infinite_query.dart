@@ -266,10 +266,8 @@ class InfiniteQuery<DataType, ErrorType, PageType> extends StateNotifier<Infinit
 
   bool get hasNextPage => getNextPage != null;
 
-  bool get isLoading {
-    final firstPage = state.pages.firstOrNull;
-    return firstPage != null && firstPage._loading && firstPage.data == null && firstPage.error == null;
-  }
+  /// This is only true for first page, make sure your api doesn't return `null`.
+  bool get isLoading => state.pages.firstOrNull == null;
 
   _replaceOrAddPage(InfiniteQueryPage<DataType, ErrorType, PageType> newPage) {
     final pageIdx = state.pages.indexWhere((e) => e.page == newPage.page);
